@@ -176,6 +176,7 @@ object SettingsGroups {
         SettingsGroup.SUMMARIES -> listOf(
             "summary_confirm_requirements",
             "server_summary_enabled", "server_summary_url", "server_summary_key", "server_summary_model",
+            "auto_summarise",
         )
         SettingsGroup.APP -> listOf("theme_mode", "dynamic_color", "show_toasts", "update_check_enabled")
         SettingsGroup.HELP_AND_ABOUT -> listOf("logging_enabled")

@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -77,6 +78,17 @@ internal fun SummarySettingsRows(preferences: AppPreferences, updateTrigger: Int
     // Server first: it is the choice that decides whether the rest of the section — the 2.6 GB
     // download card and friends — is on screen at all.
     SummaryServerRows(preferences, updateTrigger, actions)
+
+    // Why summaries are one tap per call is the cost, and the cost lives on the phone. With a
+    // server writing them it is near zero, so automatic becomes worth offering — and it stays the
+    // user's decision, which is why it is a switch here rather than implied by the server one.
+    SettingsToggleRow(
+        icon = Icons.Filled.AutoAwesome,
+        label = stringResource(R.string.auto_summarise_switch),
+        description = stringResource(R.string.auto_summarise_switch_description),
+        checked = remember(updateTrigger) { preferences.isAutoSummarise() },
+        onCheckedChange = { actions.setAutoSummarise(it) }
+    )
 
     // Settings-only, and passed rather than living in SummaryRows because
     // the wizard renders those same rows and has no business offering a

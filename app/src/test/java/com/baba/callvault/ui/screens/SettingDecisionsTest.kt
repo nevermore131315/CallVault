@@ -106,6 +106,7 @@ class SettingDecisionsTest {
         "server_summary_url" to Decision(SettingsOnly("typed by the user, only read while the switch is on")),
         "server_summary_key" to Decision(SettingsOnly("only when the server asks for one")),
         "server_summary_model" to Decision(SettingsOnly("blank means whatever the server has loaded — the whole point of the switch")),
+        "auto_summarise" to Decision(SettingsOnly("off by default; the tap per call was there for cost, and a server removes that cost")),
         // App (VoIP) calls
         "voip_recording_enabled" to Decision(Wizard(WizardStep.AUTO_RECORD), ModeCapability.VOIP_RECORDING),
         "voip_auto_start" to Decision(Wizard(WizardStep.AUTO_RECORD), ModeCapability.VOIP_RECORDING),

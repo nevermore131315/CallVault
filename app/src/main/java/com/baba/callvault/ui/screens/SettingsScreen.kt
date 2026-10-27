@@ -646,6 +646,7 @@ private fun SettingsScreenPreview() {
             override fun setServerSummaryUrl(url: String) {}
             override fun setServerSummaryKey(key: String) {}
             override fun setServerSummaryModel(model: String) {}
+            override fun setAutoSummarise(on: Boolean) {}
             override fun setTranscriptionLanguage(language: String?) {}
             override fun setTranscriptionAskLanguage(ask: Boolean) {}
             override fun downloadTranscriptionModel(model: TranscriptionModel) {}

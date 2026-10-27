@@ -75,6 +75,7 @@ class AppPreferences(context: Context) {
             // with them because they belong to the user's own server, not to this phone.
             "server_asr_enabled", "server_asr_url", "server_asr_key",
             "server_summary_enabled", "server_summary_url", "server_summary_key", "server_summary_model",
+            "auto_summarise",
             // App (VoIP) calls policy
             "voip_recording_enabled", "voip_auto_start", "voip_excluded_packages",
             // Updates
@@ -360,6 +361,7 @@ class AppPreferences(context: Context) {
         SERVER_SUMMARY_URL("server_summary_url"),
         SERVER_SUMMARY_KEY("server_summary_key"),
         SERVER_SUMMARY_MODEL("server_summary_model"),
+        AUTO_SUMMARISE("auto_summarise"),
         TRANSCRIPTION_LANGUAGE("transcription_language"),
         TRANSCRIPTION_ASK_LANGUAGE("transcription_ask_language"),
         PRIVILEGED_MODE("privileged_mode"),
@@ -859,6 +861,18 @@ class AppPreferences(context: Context) {
     fun getServerSummaryModel(): String = getString(Key.SERVER_SUMMARY_MODEL, "").orEmpty()
 
     fun setServerSummaryModel(model: String) = setString(Key.SERVER_SUMMARY_MODEL, model.trim())
+
+    /**
+     * Whether a call is summarised as soon as its transcript lands, with no tap.
+     *
+     * Off by default. It exists because the arithmetic changes when the summariser lives on a
+     * server: the phone's cost drops to nothing, so "one tap per call" stops being a reasonable
+     * price for keeping the work deliberate. On-device it still means a minute of full CPU per
+     * call, which is why the toggle says so rather than hiding the distinction.
+     */
+    fun isAutoSummarise(): Boolean = getBoolean(Key.AUTO_SUMMARISE, false)
+
+    fun setAutoSummarise(on: Boolean) = setBoolean(Key.AUTO_SUMMARISE, on)
 
     /** Whether transcription should be done by the server rather than the phone. */
     fun useServerTranscription(): Boolean =

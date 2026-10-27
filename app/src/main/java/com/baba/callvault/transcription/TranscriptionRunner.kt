@@ -13,9 +13,12 @@ import android.net.Uri
 import android.os.SystemClock
 import androidx.core.net.toUri
 import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.summary.SummaryModel
+import com.baba.callvault.summary.SummaryScheduler
 import com.baba.callvault.system.interop.TranscriptSidecar
 import com.baba.callvault.system.storage.StorageRouter
 import com.baba.callvault.data.recordings.ImportedRecording
+import com.baba.callvault.transcription.model.ModelRepository
 import com.baba.callvault.data.recordings.RecordingCatalog
 import com.baba.callvault.data.recordings.RecordingsRepository
 import com.baba.callvault.data.recordings.TranscribeOnlyAudio
@@ -252,6 +255,18 @@ class TranscriptionRunner(
                 }
                 dao.replaceSegments(displayName, segments.labelled(displayName))
                 mark(displayName, TranscriptState.DONE, modelId, language)
+                // Summarise it too, when that is what was asked for — and only when a summary
+                // could actually run. With no model and no server the worker retries until one
+                // appears, which as an automatic job is a loop nobody asked for.
+                runCatching {
+                    val prefs = AppPreferences(context)
+                    if (prefs.isAutoSummarise() &&
+                        (prefs.useServerSummary() || ModelRepository.isInstalled(context, SummaryModel.DEFAULT))
+                    ) {
+                        AppLogger.i(TAG, "Queueing the summary of '$displayName' automatically")
+                        SummaryScheduler.runNow(context, displayName)
+                    }
+                }.onFailure { AppLogger.w(TAG, "Could not queue the automatic summary: ${it.message}") }
                 // Mirror the finished transcript (+ notes/summary) to a file beside the audio, when the
                 // user has turned on sidecar backups. Guarded inside; NonCancellable so a stopping worker
                 // still writes it.

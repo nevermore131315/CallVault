@@ -114,6 +114,7 @@ interface SettingsActions {
     fun setServerSummaryUrl(url: String)
     fun setServerSummaryKey(key: String)
     fun setServerSummaryModel(model: String)
+    fun setAutoSummarise(on: Boolean)
 
     /** Whether tapping Transcribe asks which language, for phones that take calls in several. */
     fun setTranscriptionAskLanguage(ask: Boolean)
@@ -569,6 +570,11 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     override fun setServerSummaryModel(model: String) {
         preferences.setServerSummaryModel(model)
+        refresh()
+    }
+
+    override fun setAutoSummarise(on: Boolean) {
+        preferences.setAutoSummarise(on)
         refresh()
     }
 
