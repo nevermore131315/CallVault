@@ -429,6 +429,12 @@ dependencies {
     // pairing falls back to the platform Conscrypt and fails on Android 14+/OEM builds with
     // NoSuchMethodException: com.android.org.conscrypt.Conscrypt.exportKeyingMaterial.
     implementation("org.conscrypt:conscrypt-android:2.5.2")
+    // Unit-test runtime, not app runtime: conscrypt-android carries no desktop native, so on
+    // Linux every Robolectric test dies in application setup with "no conscrypt_jni" — the
+    // failure recorded in docs/dev-notes/2026-10-20-fork-kabasik007-hardening.md. The openjdk
+    // build ships a linux native; swapping it in on the test classpath only runs the same
+    // Conscrypt classes Robolectric wants. Android keeps conscrypt-android untouched.
+    testRuntimeOnly("org.conscrypt:conscrypt-openjdk-uber:2.5.2")
 
     // Test harness
     testImplementation("junit:junit:4.13.2")
@@ -456,4 +462,12 @@ dependencies {
     // and the unit-level drift guard compares SQL, which cannot catch a statement that fails to
     // execute or silently drops rows. Needs the exported schemas, wired into assets below.
     androidTestImplementation(libs.androidx.room.testing)
+}
+
+// The unit-test runtime needs a conscrypt whose native is built for the desktop JVM, or every
+// Robolectric test dies in application setup ("no conscrypt_jni"); the swap-in is declared in
+// the dependencies block above. Android itself keeps conscrypt-android, which is what the
+// pairing TLS actually runs on.
+configurations.matching { it.name == "testRuntimeClasspath" }.configureEach {
+    exclude(group = "org.conscrypt", module = "conscrypt-android")
 }
