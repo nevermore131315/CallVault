@@ -13,7 +13,6 @@ import com.baba.callvault.data.transcripts.db.TranscriptDatabase
 import com.baba.callvault.data.transcripts.db.TranscriptState
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.remote.RemoteSummaryHost
-import com.baba.callvault.remote.RemoteTranscriber
 import com.baba.callvault.transcription.TranscriptionEngine
 import kotlinx.coroutines.flow.first
 
@@ -60,6 +59,8 @@ object SummaryQueue {
     ): SummaryBlocker? {
         if (!TranscriptDatabase.exists(context)) return SummaryBlocker.NO_TRANSCRIPT
 
+        val onServer = AppPreferences(context).useServerSummary()
+
         val db = TranscriptDatabase.get(context)
         val transcript = db.transcriptDao().findTranscript(displayName)
         val segmentCount = if (transcript?.state == TranscriptState.DONE) {
@@ -73,8 +74,11 @@ object SummaryQueue {
             segmentCount = segmentCount,
             // A server backend has no model to install, so "installed" means "installed locally,
             // or handed to the server".
-            isModelInstalled = isModelInstalled || AppPreferences(context).useServerSummary(),
-            isTranscribing = TranscriptionEngine.isRunning || RemoteTranscriber.isRunning,
+            isModelInstalled = isModelInstalled || onServer,
+            // The conflict is about the phone's own cores, so it only exists when the summary runs
+            // here. A server summary competes with nothing, and a server transcription leaves the
+            // phone free — gating either way made server mode wait on itself.
+            isTranscribing = !onServer && TranscriptionEngine.isRunning,
             isSummarising = SummaryEngine.isRunning || RemoteSummaryHost.isBusy(),
             isAlreadySummarised = db.summaryDao().summary(displayName) != null
         )

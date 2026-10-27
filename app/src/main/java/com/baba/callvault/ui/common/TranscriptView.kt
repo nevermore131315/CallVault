@@ -337,13 +337,15 @@ private fun ColumnScope.TranscriptBody(
     // other two would be worse than one that kept all three.
     val playable = TranscriptAudio.playbackOffered(hasAudio)
 
-    SummarySheetStrip(
-        state = summaryState,
-        onCreate = onSummarise,
-        onStop = onStopSummary,
-        onSeek = if (playable) onSeekTo else null,
-        initiallyExpanded = summaryFirst,
-    )
+    val strip: @Composable () -> Unit = {
+        SummarySheetStrip(
+            state = summaryState,
+            onCreate = onSummarise,
+            onStop = onStopSummary,
+            onSeek = if (playable) onSeekTo else null,
+            initiallyExpanded = summaryFirst,
+        )
+    }
 
     val segments = transcript?.segments.orEmpty()
 
@@ -363,22 +365,28 @@ private fun ColumnScope.TranscriptBody(
         // there. Where it is not, there is no way out and none is offered: nothing to read and
         // nothing to read it from is the honest state of a transcript deleted from a text-only
         // import, and a button that cannot work would only say otherwise.
-        transcript == null -> Text(
-            text = stringResource(
-                if (isTranscriptSettled) R.string.transcript_none else R.string.transcript_loading
-            ),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(horizontal = 24.dp, vertical = 24.dp)
-        )
+        transcript == null -> Column {
+            strip()
+            Text(
+                text = stringResource(
+                    if (isTranscriptSettled) R.string.transcript_none else R.string.transcript_loading
+                ),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 24.dp)
+            )
+        }
 
         // Silence is a result, not a failure. A blank sheet would read as a bug.
-        segments.isEmpty() -> Text(
-            text = stringResource(R.string.transcript_no_speech),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(horizontal = 24.dp, vertical = 24.dp)
-        )
+        segments.isEmpty() -> Column {
+            strip()
+            Text(
+                text = stringResource(R.string.transcript_no_speech),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 24.dp)
+            )
+        }
 
         else -> {
             val active = remember(segments, positionMs) {
@@ -390,7 +398,8 @@ private fun ColumnScope.TranscriptBody(
             // Follow the speaker, but only while it is actually moving: scrolling the list out
             // from under someone who is reading it would be worse than not following at all.
             LaunchedEffect(active) {
-                if (active >= 0) listState.animateScrollToItem(active)
+                // +1: the summary strip is item 0 of the list, so segment N lives at N+1.
+                if (active >= 0) listState.animateScrollToItem(active + 1)
             }
 
             if (hasSpeakers && speakerNames.isGuess) {
@@ -410,6 +419,10 @@ private fun ColumnScope.TranscriptBody(
             // is what content-dependent looks like from outside. Filling the space makes the
             // height stable and the controls stay where they are put.
             LazyColumn(state = listState, modifier = Modifier.weight(1f)) {
+                // The summary is the list's first item, not a fixed block above it: expanded, it is
+                // taller than the sheet, and a block outside the scroll made its tail (decisions,
+                // to-dos, key points, facts) unreachable — the sheet had nothing left to scroll.
+                item(key = "summary") { strip() }
                 itemsIndexed(segments, key = { _, s -> s.id }) { index, segment ->
                     TranscriptLine(
                         segment = segment,

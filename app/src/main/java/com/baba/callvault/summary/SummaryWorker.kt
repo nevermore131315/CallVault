@@ -17,7 +17,6 @@ import com.baba.callvault.R
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.transcripts.db.TranscriptDatabase
 import com.baba.callvault.remote.RemoteSummaryHost
-import com.baba.callvault.remote.RemoteTranscriber
 import com.baba.callvault.transcription.HeavyWorkNotification
 import com.baba.callvault.transcription.TranscriptionEngine
 import com.baba.callvault.transcription.TranscriptionProgress
@@ -82,7 +81,12 @@ class SummaryWorker(
 
         // Checked here as well as at the tap, because a queued job can start much later than it was
         // asked for — by which time a transcription may have begun on the same cores.
-        if (TranscriptionEngine.isRunning || RemoteTranscriber.isRunning) {
+        //
+        // Only a summary that runs ON THIS PHONE competes with a local transcription. A server
+        // summary spends nothing but the upload here, and a server transcription leaves the phone's
+        // cores idle, so neither pairing is a reason to wait — gating on "any transcription at all"
+        // made a server-mode library serialise itself for no gain.
+        if (!useServer && TranscriptionEngine.isRunning) {
             AppLogger.i(TAG, "A transcription is running; deferring the summary")
             return@withContext Result.retry()
         }
