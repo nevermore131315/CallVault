@@ -741,7 +741,7 @@ fun HomeScreen(
             .firstOrNull { it.displayName == displayName }?.durationSeconds
         if (TranscriptionLengthLimit.isTooLong(recordingSeconds)) {
             tooLongMinutes = ((recordingSeconds ?: 0L) / 60L).toInt()
-        } else if (!ModelRepository.isInstalled(context, model)) {
+        } else if (!prefs.useServerTranscription() && !ModelRepository.isInstalled(context, model)) {
             showModelMissing = true
         } else if (ImportedRecording.isImported(displayName) || prefs.getTranscriptionAskLanguage()) {
             // An import ALWAYS asks, whatever the setting says. The setting means "my calls are in

@@ -639,6 +639,13 @@ private fun SettingsScreenPreview() {
         override fun setTranscriptionConfirmBeforeRun(confirm: Boolean) {}
             override fun setTranscriptionBatchLimit(limit: Int) {}
             override fun setTranscriptionModelId(id: String) {}
+            override fun setServerAsrEnabled(on: Boolean) {}
+            override fun setServerAsrUrl(url: String) {}
+            override fun setServerAsrKey(key: String) {}
+            override fun setServerSummaryEnabled(on: Boolean) {}
+            override fun setServerSummaryUrl(url: String) {}
+            override fun setServerSummaryKey(key: String) {}
+            override fun setServerSummaryModel(model: String) {}
             override fun setTranscriptionLanguage(language: String?) {}
             override fun setTranscriptionAskLanguage(ask: Boolean) {}
             override fun downloadTranscriptionModel(model: TranscriptionModel) {}

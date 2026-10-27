@@ -74,23 +74,18 @@ internal fun ExportImportRow(onExport: () -> Unit, onImport: () -> Unit) {
  */
 @Composable
 internal fun SummarySettingsRows(preferences: AppPreferences, updateTrigger: Int, actions: SettingsActions) {
-    SummaryRows(
-        updateTrigger = updateTrigger,
-        onDownload = { actions.downloadSummaryModel(it) },
-        onCancel = { actions.cancelSummaryModelDownload(it) },
-        onDelete = { actions.deleteSummaryModel(it) },
-        onImport = { model, uri -> actions.importModel(model, uri) },
-        onCancelImport = { actions.cancelModelImport(it) },
-        onBackup = { model, uri -> actions.backUpModel(model, uri) },
-        onCancelBackup = { actions.cancelModelBackup(it) }
-    ) {
-        // Settings-only, and passed in rather than living in SummaryRows because
-        // the wizard renders those same rows and has no business offering a
-        // preference about a dialog it is showing for the first time.
-        //
-        // Its home is here so the dialog's "don't show this again" can be undone
-        // — a dialog that can permanently remove itself with no way back would be
-        // a trap. Same reasoning as the transcription confirmation switch above.
+    // Server first: it is the choice that decides whether the rest of the section — the 2.6 GB
+    // download card and friends — is on screen at all.
+    SummaryServerRows(preferences, updateTrigger, actions)
+
+    // Settings-only, and passed rather than living in SummaryRows because
+    // the wizard renders those same rows and has no business offering a
+    // preference about a dialog it is showing for the first time.
+    //
+    // Its home is here so the dialog's "don't show this again" can be undone
+    // — a dialog that can permanently remove itself with no way back would be
+    // a trap. Same reasoning as the transcription confirmation switch above.
+    val askFirstRow = @Composable {
         val askFirst = remember(updateTrigger) {
             preferences.getSummaryConfirmRequirements()
         }
@@ -104,6 +99,25 @@ internal fun SummarySettingsRows(preferences: AppPreferences, updateTrigger: Int
                 actions.refreshSettings()
             }
         )
+    }
+
+    if (remember(updateTrigger) { preferences.useServerSummary() }) {
+        // A server run has no model to fetch, install, import or back up, so those rows
+        // would be three screens of machinery around a job that downloads nothing.
+        askFirstRow()
+    } else {
+        SummaryRows(
+            updateTrigger = updateTrigger,
+            onDownload = { actions.downloadSummaryModel(it) },
+            onCancel = { actions.cancelSummaryModelDownload(it) },
+            onDelete = { actions.deleteSummaryModel(it) },
+            onImport = { model, uri -> actions.importModel(model, uri) },
+            onCancelImport = { actions.cancelModelImport(it) },
+            onBackup = { model, uri -> actions.backUpModel(model, uri) },
+            onCancelBackup = { actions.cancelModelBackup(it) }
+        ) {
+            askFirstRow()
+        }
     }
 }
 

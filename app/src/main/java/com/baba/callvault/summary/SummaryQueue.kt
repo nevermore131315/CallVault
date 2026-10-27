@@ -11,6 +11,9 @@ package com.baba.callvault.summary
 import android.content.Context
 import com.baba.callvault.data.transcripts.db.TranscriptDatabase
 import com.baba.callvault.data.transcripts.db.TranscriptState
+import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.remote.RemoteSummaryHost
+import com.baba.callvault.remote.RemoteTranscriber
 import com.baba.callvault.transcription.TranscriptionEngine
 import kotlinx.coroutines.flow.first
 
@@ -68,9 +71,11 @@ object SummaryQueue {
         return blocker(
             state = transcript?.state,
             segmentCount = segmentCount,
-            isModelInstalled = isModelInstalled,
-            isTranscribing = TranscriptionEngine.isRunning,
-            isSummarising = SummaryEngine.isRunning,
+            // A server backend has no model to install, so "installed" means "installed locally,
+            // or handed to the server".
+            isModelInstalled = isModelInstalled || AppPreferences(context).useServerSummary(),
+            isTranscribing = TranscriptionEngine.isRunning || RemoteTranscriber.isRunning,
+            isSummarising = SummaryEngine.isRunning || RemoteSummaryHost.isBusy(),
             isAlreadySummarised = db.summaryDao().summary(displayName) != null
         )
     }

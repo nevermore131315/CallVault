@@ -18,6 +18,7 @@ import androidx.work.workDataOf
 import com.baba.callvault.R
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.recordings.RecordingCatalog
+import com.baba.callvault.remote.RemoteTranscriber
 import com.baba.callvault.transcription.model.ModelRepository
 import com.baba.callvault.transcription.model.TranscriptionModel
 import com.baba.callvault.utils.AppLogger
@@ -65,9 +66,12 @@ class TranscriptionWorker(
         val model = TranscriptionModel.fromId(prefs.getTranscriptionModelId())
             ?: TranscriptionModel.DEFAULT
 
+        // A server backend needs nothing installed, so the download gate does not apply to it.
+        val useServer = prefs.useServerTranscription()
+
         // Retry rather than fail: the model may still be downloading, and the work should pick up
         // once it lands instead of the user having to ask again.
-        val modelPath = ModelRepository.pathFor(applicationContext, model)?.absolutePath
+        val modelPath = if (useServer) "" else ModelRepository.pathFor(applicationContext, model)?.absolutePath
             ?: run {
                 AppLogger.i(TAG, "Model ${model.id} is not installed yet; will retry")
                 return@withContext Result.retry()
@@ -85,7 +89,11 @@ class TranscriptionWorker(
             return@withContext Result.success()
         }
 
-        AppLogger.i(TAG, "Transcribing ${names.size} recording(s) with ${model.id}")
+        AppLogger.i(
+            TAG,
+            if (useServer) "Transcribing ${names.size} recording(s) on ${prefs.getServerAsrUrl()}"
+            else "Transcribing ${names.size} recording(s) with ${model.id}"
+        )
 
         if (userRequested) {
             // A user request always names one recording. Its length is read from the container, which
@@ -140,7 +148,8 @@ class TranscriptionWorker(
                 // boundaries, so the tracker fills the long gaps between its anchors.
                 publishProgress(
                     progress.percent(
-                        reportedPercent = TranscriptionEngine.progressPercent(),
+                        reportedPercent = if (useServer) RemoteTranscriber.progressPercent
+                        else TranscriptionEngine.progressPercent(),
                         nowMs = SystemClock.elapsedRealtime(),
                     )
                 )
@@ -148,7 +157,22 @@ class TranscriptionWorker(
             }
         }
 
-        val transcribed = TranscriptionRunner(applicationContext).runBatch(
+        val transcribed = TranscriptionRunner(
+            applicationContext,
+            // Whether the run that just ended was stopped or failed is owned by whichever engine
+            // was actually driven, so the authority on the question follows the backend.
+            wasAborted = if (useServer) ({ RemoteTranscriber.wasAborted() })
+            else ({ TranscriptionEngine.wasAborted() }),
+        ) { ctx, uri, mp, language, prompt, speakers, settings ->
+            if (useServer) RemoteTranscriber.transcribe(
+                ctx, uri,
+                baseUrl = prefs.getServerAsrUrl(),
+                apiKey = prefs.getServerAsrKey(),
+                language = language,
+                speakers = speakers,
+            )
+            else TranscriptionEngine.transcribe(ctx, uri, mp, language, prompt, settings, speakers = speakers)
+        }.runBatch(
             modelId = model.id,
             modelPath = modelPath,
             language = TranscriptionLanguageChoice.resolve(

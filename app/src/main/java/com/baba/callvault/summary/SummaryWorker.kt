@@ -16,6 +16,8 @@ import androidx.work.workDataOf
 import com.baba.callvault.R
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.transcripts.db.TranscriptDatabase
+import com.baba.callvault.remote.RemoteSummaryHost
+import com.baba.callvault.remote.RemoteTranscriber
 import com.baba.callvault.transcription.HeavyWorkNotification
 import com.baba.callvault.transcription.TranscriptionEngine
 import com.baba.callvault.transcription.TranscriptionProgress
@@ -68,7 +70,9 @@ class SummaryWorker(
             }
 
         val model = SummaryModel.fromId(inputData.getString(KEY_MODEL_ID)) ?: SummaryModel.DEFAULT
-        val modelPath = ModelRepository.pathFor(applicationContext, model)?.absolutePath
+        // A server backend needs nothing installed, so the download gate does not apply to it.
+        val useServer = AppPreferences(applicationContext).useServerSummary()
+        val modelPath = if (useServer) "" else ModelRepository.pathFor(applicationContext, model)?.absolutePath
             ?: run {
                 // Retry rather than fail: the model may still be downloading, and 3.46 GB takes a
                 // while. The work should pick up when it lands instead of the user asking again.
@@ -78,7 +82,7 @@ class SummaryWorker(
 
         // Checked here as well as at the tap, because a queued job can start much later than it was
         // asked for — by which time a transcription may have begun on the same cores.
-        if (TranscriptionEngine.isRunning) {
+        if (TranscriptionEngine.isRunning || RemoteTranscriber.isRunning) {
             AppLogger.i(TAG, "A transcription is running; deferring the summary")
             return@withContext Result.retry()
         }
@@ -142,7 +146,15 @@ class SummaryWorker(
         }
 
         val summary = runCatching {
-            SummaryRunner(applicationContext).run(
+            SummaryRunner(
+                applicationContext,
+                // The whole point of the server backend: the phone sends the prompt and the model
+                // that already lives on the server answers, so 3.46 GB never touches this phone.
+                host = if (useServer) RemoteSummaryHost(applicationContext)
+                else SummaryModelHost.default(applicationContext),
+                wasAborted = if (useServer) ({ RemoteSummaryHost.wasAbortedAnywhere() })
+                else ({ SummaryEngine.wasAborted() }),
+            ).run(
                 displayName = displayName,
                 modelId = model.id,
                 modelPath = modelPath,

@@ -126,6 +126,7 @@ object SettingsGroups {
         SettingsGroup.CLEANING_UP -> listOf("RetentionPolicyRows", "MergeSubSection")
         SettingsGroup.CONNECTION -> listOf("ConnectionRows")
         SettingsGroup.MODEL_AND_LANGUAGE -> listOf(
+            "TranscriptionServerRows",
             "TranscriptionModelChoiceRow", "TranscriptionModelDownloadRows", "TranscriptionLanguageRows",
         )
         SettingsGroup.WHEN_TO_TRANSCRIBE -> listOf(
@@ -166,12 +167,16 @@ object SettingsGroups {
         SettingsGroup.CONNECTION -> listOf("handoff_persist", "offline_recording", "wd_enforced", "wd_auto_approve_network")
         SettingsGroup.MODEL_AND_LANGUAGE -> listOf(
             "transcription_model_id", "transcription_language", "transcription_ask_language",
+            "server_asr_enabled", "server_asr_url", "server_asr_key",
         )
         SettingsGroup.WHEN_TO_TRANSCRIBE -> listOf(
             "transcription_mode", "transcription_hour", "transcription_minute",
             "transcription_requires_charging", "transcription_batch_limit", "transcription_confirm_before_run",
         )
-        SettingsGroup.SUMMARIES -> listOf("summary_confirm_requirements")
+        SettingsGroup.SUMMARIES -> listOf(
+            "summary_confirm_requirements",
+            "server_summary_enabled", "server_summary_url", "server_summary_key", "server_summary_model",
+        )
         SettingsGroup.APP -> listOf("theme_mode", "dynamic_color", "show_toasts", "update_check_enabled")
         SettingsGroup.HELP_AND_ABOUT -> listOf("logging_enabled")
     }

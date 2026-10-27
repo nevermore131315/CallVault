@@ -63,13 +63,22 @@ internal fun TranscriptionSection(
     ) {
         TranscriptionScheduleRows(preferences, updateTrigger, actions)
 
-        TranscriptionModelChoiceRow(preferences, updateTrigger, actions)
+        // Which machine does the work — this phone or one on the local network. The model rows
+        // follow the answer: a server run downloads nothing to the phone.
+        TranscriptionServerRows(preferences, updateTrigger, actions)
+        val serverAsr = remember(updateTrigger) { preferences.useServerTranscription() }
+
+        if (!serverAsr) {
+            TranscriptionModelChoiceRow(preferences, updateTrigger, actions)
+        }
 
         TranscriptionLanguageRows(preferences, updateTrigger, actions)
 
         TranscriptionConfirmRow(preferences, updateTrigger, actions)
 
-        TranscriptionModelDownloadRows(preferences, updateTrigger, actions)
+        if (!serverAsr) {
+            TranscriptionModelDownloadRows(preferences, updateTrigger, actions)
+        }
 
         TranscriptionModeNote(preferences, updateTrigger)
 

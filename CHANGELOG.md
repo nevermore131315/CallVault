@@ -5,6 +5,24 @@ All notable changes to CallVault are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+
+- **Transcribe or summarise on your own computer** (opt-in, off by default). Two new switches — one
+  for transcription (Transcripts ▸ Model and language), one for summaries (Summaries) — send that
+  job to a server on your network instead of doing it on the phone, each with a URL, an optional
+  access key, and for summaries an optional model name that defaults to **whatever the server
+  already has loaded** — so no summariser download lands on the phone at all. The server speaks the
+  standard OpenAI transcription and chat endpoints; the phone still decodes audio for speaker
+  labelling, uploads the compact original file rather than a WAV inflation, takes timestamps when
+  the server provides them (one whole-recording segment when it doesn't), and still runs its own
+  grammar-checked summary parse, so a server that ignores the grammar still yields a structured
+  summary. Stop, busy-gating, and Settings state work exactly as with on-device runs.
+  <!-- 🧪 fork feature; Nevermore (Phonon ASR bridge + llama-swap) verified server-side
+       2026-10-26; device end-to-end pending. docs/dev-notes/2026-10-26-server-backends.md -->
+- **The unit-test suite runs on Linux hosts again.** Robolectric tests died before reaching any
+  test with `UnsatisfiedLinkError: no conscrypt_jni` (a prebuilt-native gap, not app behavior);
+  the JVM desktop build now swaps in the openjdk Conscrypt for tests only.
+
 ## [2.4.7] — 2026-10-25
 
 ### Added

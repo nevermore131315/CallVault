@@ -106,6 +106,15 @@ interface SettingsActions {
     fun setTranscriptionModelId(id: String)
     fun setTranscriptionLanguage(language: String?)
 
+    // Server (API) backends: either job can run on a home server instead of the phone.
+    fun setServerAsrEnabled(on: Boolean)
+    fun setServerAsrUrl(url: String)
+    fun setServerAsrKey(key: String)
+    fun setServerSummaryEnabled(on: Boolean)
+    fun setServerSummaryUrl(url: String)
+    fun setServerSummaryKey(key: String)
+    fun setServerSummaryModel(model: String)
+
     /** Whether tapping Transcribe asks which language, for phones that take calls in several. */
     fun setTranscriptionAskLanguage(ask: Boolean)
     fun downloadTranscriptionModel(model: TranscriptionModel)
@@ -523,6 +532,43 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     /** Saves the chosen model tier. */
     override fun setTranscriptionModelId(id: String) {
         preferences.setTranscriptionModelId(id)
+        refresh()
+    }
+
+    // --- Server (API) backends ---------------------------------------------------------------
+
+    override fun setServerAsrEnabled(on: Boolean) {
+        preferences.setServerAsrEnabled(on)
+        refresh()
+    }
+
+    override fun setServerAsrUrl(url: String) {
+        preferences.setServerAsrUrl(url)
+        refresh()
+    }
+
+    override fun setServerAsrKey(key: String) {
+        preferences.setServerAsrKey(key)
+        refresh()
+    }
+
+    override fun setServerSummaryEnabled(on: Boolean) {
+        preferences.setServerSummaryEnabled(on)
+        refresh()
+    }
+
+    override fun setServerSummaryUrl(url: String) {
+        preferences.setServerSummaryUrl(url)
+        refresh()
+    }
+
+    override fun setServerSummaryKey(key: String) {
+        preferences.setServerSummaryKey(key)
+        refresh()
+    }
+
+    override fun setServerSummaryModel(model: String) {
+        preferences.setServerSummaryModel(model)
         refresh()
     }
 

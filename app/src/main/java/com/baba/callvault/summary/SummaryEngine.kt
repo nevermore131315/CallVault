@@ -9,6 +9,7 @@
 package com.baba.callvault.summary
 
 import android.content.Context
+import com.baba.callvault.remote.RemoteSummaryHost
 import com.baba.callvault.transcription.TranscriptionEngine
 import com.baba.callvault.utils.AppLogger
 import kotlinx.coroutines.Dispatchers
@@ -102,6 +103,9 @@ object SummaryEngine {
     fun requestAbort() {
         aborted.set(true)
         LlamaNative.requestAbort()
+        // And the server run, if that is what is busy — routed here so every Stop route covers
+        // both backends without knowing which one is.
+        RemoteSummaryHost.requestAbortAnywhere()
     }
 
     /** A loaded model, valid only inside [withModel]. */

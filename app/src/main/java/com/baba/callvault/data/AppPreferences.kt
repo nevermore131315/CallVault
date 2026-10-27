@@ -71,6 +71,10 @@ class AppPreferences(context: Context) {
             "transcription_batch_limit", "transcription_confirm_before_run", "transcription_model_id",
             "transcription_language", "transcription_ask_language",
             "summary_confirm_requirements", "summary_language",
+            // Server (API) backends — user preferences, not per-device state; the API keys travel
+            // with them because they belong to the user's own server, not to this phone.
+            "server_asr_enabled", "server_asr_url", "server_asr_key",
+            "server_summary_enabled", "server_summary_url", "server_summary_key", "server_summary_model",
             // App (VoIP) calls policy
             "voip_recording_enabled", "voip_auto_start", "voip_excluded_packages",
             // Updates
@@ -344,6 +348,18 @@ class AppPreferences(context: Context) {
         SUMMARY_CONFIRM_REQUIREMENTS("summary_confirm_requirements"),
         SUMMARY_LANGUAGE("summary_language"),
         TRANSCRIPTION_MODEL_ID("transcription_model_id"),
+
+        // --- Server (API) backends ---
+        // Either job can be handed to a home server instead of the phone's CPU. Two independent
+        // pairs, because the two jobs are served by different programs in practice (an ASR engine
+        // and an LLM server), and a user may want one without the other.
+        SERVER_ASR_ENABLED("server_asr_enabled"),
+        SERVER_ASR_URL("server_asr_url"),
+        SERVER_ASR_KEY("server_asr_key"),
+        SERVER_SUMMARY_ENABLED("server_summary_enabled"),
+        SERVER_SUMMARY_URL("server_summary_url"),
+        SERVER_SUMMARY_KEY("server_summary_key"),
+        SERVER_SUMMARY_MODEL("server_summary_model"),
         TRANSCRIPTION_LANGUAGE("transcription_language"),
         TRANSCRIPTION_ASK_LANGUAGE("transcription_ask_language"),
         PRIVILEGED_MODE("privileged_mode"),
@@ -802,6 +818,55 @@ class AppPreferences(context: Context) {
 
     fun setSummaryConfirmRequirements(confirm: Boolean) =
         setBoolean(Key.SUMMARY_CONFIRM_REQUIREMENTS, confirm)
+
+    // --- Server (API) backends -------------------------------------------------------------------
+    //
+    // Transcription and summarisation can each be handed to a server on the local network instead
+    // of the phone's CPU. Disabled by default: the phone keeps doing everything unless the user
+    // says otherwise, and an unset URL is treated as disabled even if the switch was left on.
+
+    fun isServerAsrEnabled() = getBoolean(Key.SERVER_ASR_ENABLED, false)
+
+    fun setServerAsrEnabled(enabled: Boolean) = setBoolean(Key.SERVER_ASR_ENABLED, enabled)
+
+    /** Base URL of the speech-to-text server, with no trailing slash and no path. */
+    fun getServerAsrUrl(): String = getString(Key.SERVER_ASR_URL, "").orEmpty()
+
+    fun setServerAsrUrl(url: String) = setString(Key.SERVER_ASR_URL, url.trim().trimEnd('/'))
+
+    /** Optional bearer token; empty means no `Authorization` header is sent. */
+    fun getServerAsrKey(): String = getString(Key.SERVER_ASR_KEY, "").orEmpty()
+
+    fun setServerAsrKey(key: String) = setString(Key.SERVER_ASR_KEY, key.trim())
+
+    fun isServerSummaryEnabled() = getBoolean(Key.SERVER_SUMMARY_ENABLED, false)
+
+    fun setServerSummaryEnabled(enabled: Boolean) = setBoolean(Key.SERVER_SUMMARY_ENABLED, enabled)
+
+    fun getServerSummaryUrl(): String = getString(Key.SERVER_SUMMARY_URL, "").orEmpty()
+
+    fun setServerSummaryUrl(url: String) = setString(Key.SERVER_SUMMARY_URL, url.trim().trimEnd('/'))
+
+    fun getServerSummaryKey(): String = getString(Key.SERVER_SUMMARY_KEY, "").orEmpty()
+
+    fun setServerSummaryKey(key: String) = setString(Key.SERVER_SUMMARY_KEY, key.trim())
+
+    /**
+     * The model to summarise with on the server, or empty to use **whatever the server already has
+     * loaded** — the cheap setting for a home server where loading a second model is the expensive
+     * part. The name is matched against the server's own loaded list before anything is sent.
+     */
+    fun getServerSummaryModel(): String = getString(Key.SERVER_SUMMARY_MODEL, "").orEmpty()
+
+    fun setServerSummaryModel(model: String) = setString(Key.SERVER_SUMMARY_MODEL, model.trim())
+
+    /** Whether transcription should be done by the server rather than the phone. */
+    fun useServerTranscription(): Boolean =
+        isServerAsrEnabled() && getServerAsrUrl().isNotBlank()
+
+    /** Whether summarisation should be done by the server rather than the phone. */
+    fun useServerSummary(): Boolean =
+        isServerSummaryEnabled() && getServerSummaryUrl().isNotBlank()
 
     /**
      * The language summaries are written in, or null to work it out per recording.

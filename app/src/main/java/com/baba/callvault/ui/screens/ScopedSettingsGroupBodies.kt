@@ -184,8 +184,12 @@ private fun ConnectionBody() {
 
 @Composable
 private fun ModelAndLanguageBody(preferences: AppPreferences, updateTrigger: Int, actions: SettingsActions) {
-    TranscriptionModelChoiceRow(preferences, updateTrigger, actions)
-    TranscriptionModelDownloadRows(preferences, updateTrigger, actions)
+    TranscriptionServerRows(preferences, updateTrigger, actions)
+    // A server run downloads nothing to the phone, so the model rows hide when one is configured.
+    if (!remember(updateTrigger) { preferences.useServerTranscription() }) {
+        TranscriptionModelChoiceRow(preferences, updateTrigger, actions)
+        TranscriptionModelDownloadRows(preferences, updateTrigger, actions)
+    }
     SettingsDivider()
     TranscriptionLanguageRows(preferences, updateTrigger, actions)
 }

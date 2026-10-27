@@ -97,6 +97,15 @@ class SettingDecisionsTest {
         "transcription_ask_language" to Decision(SettingsOnly("for multilingual phones, after the pin is chosen")),
         "summary_confirm_requirements" to Decision(SettingsOnly("asked at the first summary instead")),
         "summary_language" to Decision(SettingsOnly("follows the transcription language")),
+        // Server (API) backends — never wizard steps: the wizard must stay completable with no
+        // server, and a person who has one finds these where the local choice already lives.
+        "server_asr_enabled" to Decision(SettingsOnly("opt-in off; only meaningful with a server of your own, next to the model choice")),
+        "server_asr_url" to Decision(SettingsOnly("typed by the user, only read while the switch is on")),
+        "server_asr_key" to Decision(SettingsOnly("only when the server asks for one; bearer, never required")),
+        "server_summary_enabled" to Decision(SettingsOnly("opt-in off; in the Summaries group, and it replaces the download card entirely")),
+        "server_summary_url" to Decision(SettingsOnly("typed by the user, only read while the switch is on")),
+        "server_summary_key" to Decision(SettingsOnly("only when the server asks for one")),
+        "server_summary_model" to Decision(SettingsOnly("blank means whatever the server has loaded — the whole point of the switch")),
         // App (VoIP) calls
         "voip_recording_enabled" to Decision(Wizard(WizardStep.AUTO_RECORD), ModeCapability.VOIP_RECORDING),
         "voip_auto_start" to Decision(Wizard(WizardStep.AUTO_RECORD), ModeCapability.VOIP_RECORDING),

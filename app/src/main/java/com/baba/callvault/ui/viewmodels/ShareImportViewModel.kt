@@ -223,7 +223,10 @@ class ShareImportViewModel(application: Application) : AndroidViewModel(applicat
         val label = ImportedRecording.labelOf(imported.displayName) ?: imported.displayName
 
         val isModelInstalled =
-            withContext(Dispatchers.IO) { ModelRepository.isInstalled(context, modelOf(context)) }
+            withContext(Dispatchers.IO) {
+                AppPreferences(context).useServerTranscription() ||
+                    ModelRepository.isInstalled(context, modelOf(context))
+            }
         importedDurationMs = imported.durationMs
         importedKind = kind
         _state.value = when (val step = ImportFollowUp.after(imported.durationMs, isModelInstalled)) {

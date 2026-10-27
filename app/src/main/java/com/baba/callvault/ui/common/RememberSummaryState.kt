@@ -15,6 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
+import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.transcripts.db.TranscriptDatabase
 import com.baba.callvault.summary.CallSummary
 import com.baba.callvault.summary.SummaryModel
@@ -124,7 +125,8 @@ fun rememberSummaryState(displayName: String): State<SummaryCardState> {
 
                 else -> {
                     val installed = withContext(Dispatchers.IO) {
-                        ModelRepository.isInstalled(appContext, SummaryModel.DEFAULT)
+                        AppPreferences(appContext).useServerSummary() ||
+                            ModelRepository.isInstalled(appContext, SummaryModel.DEFAULT)
                     }
                     val blocker = SummaryQueue.blockerFor(appContext, displayName, installed)
                     if (blocker == null) SummaryCardState.Offered else SummaryCardState.Blocked(blocker)

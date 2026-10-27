@@ -675,6 +675,20 @@
     <string name="summary_model_downloading">Downloading… %1$d%%</string>
     <string name="summary_model_waiting">Waiting for Wi-Fi</string>
     <string name="summary_model_cancel">Cancel the download</string>
+
+    <!-- Server (API) backends: hand transcription/summaries to a home server -->
+    <string name="server_asr_switch">Transcribe on a server</string>
+    <string name="server_short">Server</string>
+    <string name="server_asr_switch_description">Send call audio to a speech-to-text server on your network instead of using the phone\'s CPU. The recording leaves the phone — switch this on only where you trust the network.</string>
+    <string name="server_summary_switch">Summarise on a server</string>
+    <string name="server_summary_switch_description">Ask a language model on your network to write summaries. With no model named, it answers with whichever model the server already has loaded. The transcript text leaves the phone.</string>
+    <string name="server_url_label">Server address</string>
+    <string name="server_url_support">Base URL with port, no path. Plain http is fine on your own network.</string>
+    <string name="server_key_label">API key (optional)</string>
+    <string name="server_key_placeholder">Only if the server asks for one</string>
+    <string name="server_model_label">Model name (optional)</string>
+    <string name="server_model_placeholder">Leave empty for the loaded model</string>
+    <string name="server_model_support">Empty uses whatever the server has loaded right now; naming a model asks for that one specifically.</string>
     <string name="summary_model_resume">Resume the download</string>
     <string name="summary_model_resume_subtitle">%1$.1f GB of %2$.1f GB already downloaded</string>
     <string name="summary_model_discard">Discard what was downloaded</string>

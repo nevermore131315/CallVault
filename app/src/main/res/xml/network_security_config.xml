@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Server (API) backends talk to user-typed http:// URLs on the local network (or tailnet), and
+  Android blocks cleartext by default from targetSdk 28 up. Everything the app reaches on its own
+  — GitHub, Hugging Face — is https, so the permission only ever applies to a server the user
+  configured with their own hands.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

@@ -12,6 +12,7 @@ import android.app.Application
 import android.media.AudioManager
 import android.net.Uri
 import android.os.SystemClock
+import com.baba.callvault.remote.RemoteTranscriber
 import com.baba.callvault.server.RecorderConnection
 import androidx.annotation.StringRes
 import androidx.lifecycle.AndroidViewModel
@@ -852,8 +853,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
                 // Transcription owns the CPU while it runs. Drawing alongside it does not merely
                 // make both slower — it inflates the time the estimate learns from, so every future
-                // "this will take about N minutes" inherits the interference.
-                if (TranscriptionEngine.isRunning) {
+                // "this will take about N minutes" inherits the interference. A server run owns
+                // the phone's decoder while it labels speakers, so it counts too.
+                if (TranscriptionEngine.isRunning || RemoteTranscriber.isRunning) {
                     AppLogger.i(TAG, "Not drawing recordings while a transcription is running")
                     return@launch
                 }

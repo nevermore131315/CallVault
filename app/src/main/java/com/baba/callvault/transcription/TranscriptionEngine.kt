@@ -12,6 +12,7 @@ import android.content.Context
 import android.net.Uri
 import android.os.SystemClock
 import androidx.annotation.VisibleForTesting
+import com.baba.callvault.remote.RemoteTranscriber
 import com.baba.callvault.server.speakers.OfflineSpeakerLabeller
 import com.baba.callvault.utils.AppLogger
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -126,6 +127,11 @@ object TranscriptionEngine {
         abortRequested.set(true)
         runCatching { WhisperNative.requestAbort() }
             .onFailure { AppLogger.w(TAG, "Abort request failed: ${it.message}") }
+        // A third half now: a run handed to a server on the local network. Called unconditionally
+        // so every Stop route — the worker loop, the scheduler, the cascade — covers a server run
+        // without any of them having to know which backend is busy.
+        runCatching { RemoteTranscriber.requestAbort() }
+            .onFailure { AppLogger.w(TAG, "Server abort request failed: ${it.message}") }
     }
 
     /**

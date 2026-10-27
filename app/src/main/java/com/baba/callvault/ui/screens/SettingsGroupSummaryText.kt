@@ -68,11 +68,13 @@ internal fun groupSummaryText(
     }
     SettingsGroup.CONNECTION -> connectionSummaryText(preferences, updateTrigger, expanded)
     SettingsGroup.MODEL_AND_LANGUAGE -> {
+        val onServer = remember(updateTrigger) { preferences.useServerTranscription() }
         val modelId = remember(updateTrigger) { preferences.getTranscriptionModelId() }
         val model = TranscriptionModel.fromId(modelId) ?: TranscriptionModel.DEFAULT
         joinSummary(
             listOf(
-                stringResource(TranscriptionLabels.titleOf(model)),
+                if (onServer) stringResource(R.string.server_short)
+                else stringResource(TranscriptionLabels.titleOf(model)),
                 sharedLanguageLabel(preferences, updateTrigger),
             )
         )
@@ -83,12 +85,17 @@ internal fun groupSummaryText(
     }
     SettingsGroup.SUMMARIES -> {
         val context = LocalContext.current
+        val onServer = remember(updateTrigger) { preferences.useServerSummary() }
         val installed = remember(updateTrigger, expanded) {
-            ModelRepository.isInstalled(context, SummaryModel.DEFAULT)
+            onServer || ModelRepository.isInstalled(context, SummaryModel.DEFAULT)
         }
         joinSummary(
             listOf(
-                stringResource(if (installed) R.string.summary_model_installed else R.string.settings_summary_not_downloaded),
+                when {
+                    onServer -> stringResource(R.string.server_short)
+                    installed -> stringResource(R.string.summary_model_installed)
+                    else -> stringResource(R.string.settings_summary_not_downloaded)
+                },
                 sharedLanguageLabel(preferences, updateTrigger),
             )
         )
