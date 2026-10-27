@@ -187,6 +187,15 @@ fun TranscriptView(
     tags: List<String> = emptyList(),
     onDelete: () -> Unit,
     /**
+     * Transcribes the recording again, replacing the current text — null where there is nothing to
+     * re-run it with (no recording left, or a host that cannot queue work).
+     *
+     * Settings change the answer: a different model, a pinned language, or a server in place of the
+     * phone. It was left out because a re-run costs minutes of CPU; on a home server it costs
+     * seconds, and the speaker names depend on the segments a run produces.
+     */
+    onRetranscribe: (() -> Unit)? = null,
+    /**
      * How to name the two captured channels.
      *
      * Passed in rather than read here so the sheet stays a pure rendering of what it is given, and
@@ -228,6 +237,7 @@ fun TranscriptView(
             onNoteChange = onNoteChange,
             tags = tags,
             onDelete = onDelete,
+            onRetranscribe = onRetranscribe,
             speakerNames = speakerNames,
             onChooseSpeakerMap = onChooseSpeakerMap,
             onConfirmSpeakers = onConfirmSpeakers,
@@ -320,6 +330,7 @@ private fun ColumnScope.TranscriptBody(
     onNoteChange: ((String) -> Unit)?,
     tags: List<String>,
     onDelete: () -> Unit,
+    onRetranscribe: (() -> Unit)?,
     speakerNames: SpeakerNames,
     onChooseSpeakerMap: (ChannelMap) -> Unit,
     onConfirmSpeakers: () -> Unit,
@@ -580,6 +591,26 @@ private fun ColumnScope.TranscriptBody(
             )
         ) {
             Text(stringResource(R.string.transcript_delete))
+        }
+        // Beside Delete, and not in the error colour: it replaces the text rather than losing it.
+        // Confirmed anyway, because the words on screen do go.
+        if (onRetranscribe != null && transcript != null) {
+            var confirming by remember { mutableStateOf(false) }
+            TextButton(onClick = { confirming = true }) {
+                Text(stringResource(R.string.transcript_retranscribe))
+            }
+            if (confirming) {
+                ConfirmDialog(
+                    title = stringResource(R.string.transcript_retranscribe_confirm_title),
+                    body = stringResource(R.string.transcript_retranscribe_confirm_message),
+                    confirmLabel = stringResource(R.string.transcript_retranscribe),
+                    onDismiss = { confirming = false },
+                    onConfirm = {
+                        confirming = false
+                        onRetranscribe()
+                    }
+                )
+            }
         }
     }
 }

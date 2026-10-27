@@ -145,6 +145,7 @@ import com.baba.callvault.transcription.model.ModelRepository
 import com.baba.callvault.transcription.model.TranscriptionModel
 import com.baba.callvault.transcription.AudioDecoder
 import com.baba.callvault.transcription.TranscriptionEstimate
+import com.baba.callvault.transcription.TranscriptionScheduler
 import com.baba.callvault.transcription.TranscriptionLengthLimit
 import com.baba.callvault.ui.common.ImportedBadge
 import com.baba.callvault.ui.common.RecordingLabel
@@ -1737,6 +1738,20 @@ fun HomeScreen(
                 }
                 deleteTranscriptFor = displayName
             },
+            // Only where there is still an audio file to read: a transcript that outlived its
+            // recording has nothing to re-run, and offering it would be a button that fails.
+            onRetranscribe = if (row != null) {
+                {
+                    // Sheet only: it closes first for the same reason Delete closes it — the text
+                    // being read is about to be replaced, and watching it change underneath is not
+                    // feedback. The page stays, and shows the transcript being written again.
+                    if (!readingPresentation) transcriptFor = null
+                    transcriptScope.launch {
+                        TranscriptRepository.delete(context, displayName)
+                        TranscriptionScheduler.runNow(context, displayName, userRequested = true)
+                    }
+                }
+            } else null,
             // The contact's name is the one already in the header, so a labelled line reads as
             // part of the same conversation rather than introducing a second way to say who called.
             speakerNames = SpeakerNames(

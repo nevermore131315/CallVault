@@ -814,6 +814,8 @@
     <string name="transcript_export_chooser">Share transcript</string>
     <string name="transcript_export_failed">Could not export the transcript</string>
     <string name="transcript_retranscribe">Transcribe again</string>
+    <string name="transcript_retranscribe_confirm_title">Transcribe this call again?</string>
+    <string name="transcript_retranscribe_confirm_message">The transcript is replaced by a fresh one. The recording is untouched — and with transcription handled by a server, this takes seconds.</string>
     <string name="transcript_note_add">Add a note</string>
     <string name="transcript_note_hint">What it was about, or what to do about it…</string>
     <string name="transcript_too_long_title">Too long to transcribe</string>
