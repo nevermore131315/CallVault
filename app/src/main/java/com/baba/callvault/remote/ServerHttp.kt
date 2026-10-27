@@ -98,7 +98,11 @@ internal object ServerHttp {
         readTimeoutMs: Int,
         connection: AtomicReference<HttpURLConnection>?,
     ): Response {
-        val conn = (URL(url).openConnection() as HttpURLConnection).apply {
+        // A typed address may arrive without a scheme (`192.168.1.10:8098`); URL() would read the
+        // digits before the colon as a protocol and throw "no protocol". AppPreferences already
+        // normalises what Settings stores, and this keeps any other caller honest too.
+        val target = if ("://" in url) url else "http://$url"
+        val conn = (URL(target).openConnection() as HttpURLConnection).apply {
             requestMethod = method
             connectTimeout = 10_000
             this.readTimeout = readTimeoutMs

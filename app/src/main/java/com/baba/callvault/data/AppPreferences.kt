@@ -830,7 +830,7 @@ class AppPreferences(context: Context) {
     fun setServerAsrEnabled(enabled: Boolean) = setBoolean(Key.SERVER_ASR_ENABLED, enabled)
 
     /** Base URL of the speech-to-text server, with no trailing slash and no path. */
-    fun getServerAsrUrl(): String = getString(Key.SERVER_ASR_URL, "").orEmpty()
+    fun getServerAsrUrl(): String = withScheme(getString(Key.SERVER_ASR_URL, "").orEmpty())
 
     fun setServerAsrUrl(url: String) = setString(Key.SERVER_ASR_URL, url.trim().trimEnd('/'))
 
@@ -843,7 +843,7 @@ class AppPreferences(context: Context) {
 
     fun setServerSummaryEnabled(enabled: Boolean) = setBoolean(Key.SERVER_SUMMARY_ENABLED, enabled)
 
-    fun getServerSummaryUrl(): String = getString(Key.SERVER_SUMMARY_URL, "").orEmpty()
+    fun getServerSummaryUrl(): String = withScheme(getString(Key.SERVER_SUMMARY_URL, "").orEmpty())
 
     fun setServerSummaryUrl(url: String) = setString(Key.SERVER_SUMMARY_URL, url.trim().trimEnd('/'))
 
@@ -867,6 +867,20 @@ class AppPreferences(context: Context) {
     /** Whether summarisation should be done by the server rather than the phone. */
     fun useServerSummary(): Boolean =
         isServerSummaryEnabled() && getServerSummaryUrl().isNotBlank()
+
+    /**
+     * A typed address without a scheme is read as `http://`.
+     *
+     * People type `192.168.1.10:8098`, not `http://192.168.1.10:8098` — and such a string is not
+     * merely sloppy, it is rejected outright: `URL()` reads everything before the first `:` as the
+     * protocol, and a protocol cannot begin with a digit, so the run dies with "no protocol"
+     * before a byte is sent. Anything that already carries a scheme is left exactly as typed,
+     * which keeps `https://` servers on TLS.
+     */
+    private fun withScheme(url: String): String {
+        val trimmed = url.trim()
+        return if (trimmed.isEmpty() || "://" in trimmed) trimmed else "http://$trimmed"
+    }
 
     /**
      * The language summaries are written in, or null to work it out per recording.

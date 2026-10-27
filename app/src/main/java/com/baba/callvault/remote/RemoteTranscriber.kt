@@ -104,7 +104,11 @@ object RemoteTranscriber {
                 // THIS phone's recording whether or not whisper runs here, and the decode is the
                 // same one the local path does for exactly that reason. The float PCM itself is
                 // thrown away — only the upload matters afterwards.
-                if (speakers != null) feedSpeakerLabeller(context, uri, speakers)
+                //
+                // It is also the one step that can take real time before a single byte is sent, so
+                // it is bounded and reported: a decode that stalls must not hold the run at zero
+                // with nothing on the wire, and labels are worth less than the transcript itself.
+                if (speakers != null) feedSpeakerLabellerBounded(context, uri, speakers)
                 if (aborted.get()) throw IOException("Stopped before upload")
 
                 val fileBytes = readFile(context, uri)
@@ -136,6 +140,39 @@ object RemoteTranscriber {
                 isRunning = false
                 progressPercent = 0
             }
+        }
+    }
+
+    /**
+     * [feedSpeakerLabeller] with a deadline and a visible heartbeat.
+     *
+     * The decode is the only step that runs before anything is sent, so it is the only step where
+     * "loading" can mean "nothing is happening at all". A stalled codec there used to hold the run
+     * at 0 % forever; now it costs at most its own budget and the transcript still goes out — with
+     * no speaker labels, which is a degradation the transcript survives and a hang is not.
+     */
+    private fun feedSpeakerLabellerBounded(context: Context, uri: Uri, labeller: OfflineSpeakerLabeller) {
+        val durationMs = runCatching { AudioDecoder.durationMs(context, uri) }.getOrDefault(0L)
+        // Software Opus decoding runs faster than real time; five times the recording length is a
+        // generous ceiling that still bounds a wedged codec to minutes rather than forever.
+        val budgetMs = (90_000L + durationMs / 5).coerceAtMost(15 * 60_000L)
+        val started = System.currentTimeMillis()
+        val worker = Thread({
+            runCatching { feedSpeakerLabeller(context, uri, labeller) }
+                .onFailure { AppLogger.w(TAG, "speaker decode failed: ${it.message}") }
+        }, "cv-server-speaker-decode").apply {
+            isDaemon = true
+            start()
+        }
+        while (worker.isAlive && !aborted.get()) {
+            val elapsed = System.currentTimeMillis() - started
+            if (elapsed >= budgetMs) break
+            // 3-20 %: a screen showing movement is not lying, and it stays inside the upload's share.
+            progressPercent = (3 + 17 * elapsed / budgetMs).toInt().coerceIn(3, 20)
+            Thread.sleep(250)
+        }
+        if (worker.isAlive) {
+            AppLogger.w(TAG, "speaker decode still running after ${budgetMs / 1000}s; sending without labels")
         }
     }
 
